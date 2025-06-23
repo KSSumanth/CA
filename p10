@@ -1,0 +1,48 @@
+#include<stdio.h>
+#include<omp.h>
+#include<stdbool.h>
+#define TRUE 1 
+#define FALSE 0
+#define N 100000000
+int main(int argc,int argv[]){
+    int* a;
+    int nthreads,k,i,pcount=0;
+    float st,et;
+    bool found;
+    if(argc>1){
+        nthreads=atoi(argv[1]);
+        if(omp_get_dynamic()){
+            omp_set_dynamic(0);
+        }
+        omp_set_num_threads(nthreads);
+    }
+    printf("Number of threads %d\n",omp_get_max_threads());
+    a=(int *)malloc((N+1)*sizeof(int));
+    for(i=2;i<=N;i++){
+        a[i]=1;
+    }
+    k=2;
+    st=omp_get_wtime();
+    #pragma omp parallel firstprivate(k) private(i,found)
+    while((k*k)<=N){
+        #pragma omp for
+        for(i=k*k;i<N;i+=k){
+            a[i]=0;
+        }
+        found=FALSE;
+        for(i=k+1;!found;i++){
+            if(a[i]==1){
+                k=i;
+                found=TRUE;
+            }
+        }
+    }
+    et=omp_get_wtime();
+    for(int i=2;i<=N;i++){
+        if(a[i]==1)
+        pcount++;
+    }
+    printf("the time taken is %.2f\n",et-st);
+    printf("%d number of prime numbers are their from 0 to %d",pcount,N);
+    return 0;
+}
