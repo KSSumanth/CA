@@ -1,0 +1,51 @@
+#include<stdio.h>
+#include<omp.h>
+#define NRA 62
+#define NCA 15
+#define NCB 7
+int main(){
+    int a[NRA][NCA],b[NCA][NCB],c[NRA][NCB];
+    int i,j,tid,nthreads,k,chunksize=10;
+    #pragma omp parallel shared(a,b,c,nthreads,chunksize) private(i,j,k,tid)
+    {
+        tid=omp_get_thread_num();
+        if(tid==0){
+            nthreads=omp_get_num_threads();
+            printf("number of threads = %d\n",nthreads);
+        }
+        #pragma omp parallel for schedule(static,chunksize)
+        for(i=0;i<NRA;i++){
+            for(int j=0;j<NCA;j++){
+                a[i][j]=i+j;
+            }
+        }
+        #pragma omp parallel for schedule(static,chunksize)
+        for(i=0;i<NCA;i++){
+            for(int j=0;j<NCB;j++){
+                b[i][j]=i*j;
+            }
+        }
+        #pragma omp parallel for schedule(static,chunksize)
+        for(i=0;i<NRA;i++){
+            for(int j=0;j<NCB;j++){
+                c[i][j]=0;
+            }
+        }
+          printf("Thread %d starting matrix multiplication\n",tid);
+        #pragma omp parallel for schedule(static,chunksize)
+        for(i=0;i<NRA;i++){
+            printf("Thread %d doing row %d\n",tid,i);
+            for(j=0;j<NCB;j++){
+                for(k=0;k<NCA;k++){
+                    c[i][j]=a[i][k]*b[k][j];
+                }
+            }
+        }
+}
+for(i=0;i<NRA;i++){
+    for(int j=0;j<NCB;j++){
+        printf("c[%d][%d] = %d\n",i,j,c[i][j]);
+    }
+}
+return 0;
+}
